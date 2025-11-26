@@ -24,3 +24,5 @@ class ApiPost extends Model
         return $this->hasMany(ApiPostTarget::class);
     }
 }
+
+

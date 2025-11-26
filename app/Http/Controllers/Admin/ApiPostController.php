@@ -3,21 +3,33 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendApiPostJob;
 use App\Models\ApiPost;
 use App\Models\ApiPostTarget;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class ApiPostController extends Controller
 {
     /**
-     * 投稿作成フォーム表示
+     * API投稿一覧 /admin/api-posts
+     */
+    public function index()
+    {
+        $posts = ApiPost::with('targets')
+            ->orderByDesc('id')
+            ->paginate(20);
+
+        return view('admin.api_posts.index', compact('posts'));
+    }
+
+    /**
+     * 作成フォーム /admin/api-posts/create
      */
     public function create()
     {
-        // 一般ユーザーだけを対象にする例（必要に応じて変更）
+        // 対象ユーザー（例：role = general）
         $users = User::with('profile')
             ->where('role', 'general')
             ->orderBy('id', 'desc')
@@ -27,8 +39,7 @@ class ApiPostController extends Controller
     }
 
     /**
-     * 投稿内容＋対象ユーザーを保存
-     * （実際のAPI投稿は今後ジョブ等で実装想定）
+     * 保存処理 POST /admin/api-posts
      */
     public function store(Request $request)
     {
@@ -36,7 +47,7 @@ class ApiPostController extends Controller
             'title'        => ['required', 'string', 'max:255'],
             'body'         => ['required', 'string'],
             'hashtags'     => ['nullable', 'string', 'max:255'],
-            'image'        => ['nullable', 'image', 'max:5120'], // 5MB
+            'image'        => ['nullable', 'image', 'max:5120'],
             'user_ids'     => ['required', 'array', 'min:1'],
             'user_ids.*'   => ['integer', 'exists:users,id'],
         ], [
@@ -45,11 +56,10 @@ class ApiPostController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            // storage/app/public/api_posts/... に保存
             $imagePath = $request->file('image')->store('api_posts', 'public');
         }
 
-        // api_posts レコード作成
+        // api_posts 作成
         $apiPost = ApiPost::create([
             'created_by' => Auth::id(),
             'title'      => $data['title'],
@@ -58,7 +68,7 @@ class ApiPostController extends Controller
             'image_path' => $imagePath,
         ]);
 
-        // 対象ユーザーごとのターゲットを作成
+        // 対象ユーザー分のターゲット作成
         foreach ($data['user_ids'] as $userId) {
             ApiPostTarget::create([
                 'api_post_id' => $apiPost->id,
@@ -67,11 +77,24 @@ class ApiPostController extends Controller
             ]);
         }
 
-        // ★ 実際のX API呼び出しはここでジョブに投げる想定
-        // dispatch(new SendApiPostJob($apiPost));
+        // 送信ジョブ投入（queue未設定ならコメントアウトしてもOK）
+        SendApiPostJob::dispatch($apiPost);
 
         return redirect()
-            ->route('admin.dashboard')
-            ->with('status', 'API投稿リクエストを登録しました。（実際の送信処理は今後実装）');
+            ->route('admin.api_posts.index')
+            ->with('status', 'API投稿リクエストを登録しました。');
+    }
+
+    /**
+     * 詳細 /admin/api-posts/{apiPost}
+     */
+    public function show(ApiPost $apiPost)
+    {
+        $apiPost->load(['creator', 'targets.user.profile']);
+
+        return view('admin.api_posts.show', [
+            'post' => $apiPost,
+        ]);
     }
 }
+

@@ -88,16 +88,18 @@
                             <h3 class="text-sm font-semibold text-gray-800">
                                 対象ユーザー選択 <span class="text-red-500">*</span>
                             </h3>
-                            <button type="button"
-                                    onclick="toggleAllUsers(true)"
-                                    class="text-xs text-indigo-600 hover:underline">
-                                すべて選択
-                            </button>
-                            <button type="button"
-                                    onclick="toggleAllUsers(false)"
-                                    class="text-xs text-gray-500 hover:underline ml-2">
-                                すべて解除
-                            </button>
+                            <div class="flex items-center gap-2 text-xs">
+                                <button type="button"
+                                        onclick="toggleAllUsers(true)"
+                                        class="text-indigo-600 hover:underline">
+                                    すべて選択
+                                </button>
+                                <button type="button"
+                                        onclick="toggleAllUsers(false)"
+                                        class="text-gray-500 hover:underline">
+                                    すべて解除
+                                </button>
+                            </div>
                         </div>
 
                         <div class="border rounded-md max-h-72 overflow-y-auto">
@@ -151,12 +153,13 @@
                             API投稿リクエストを登録する
                         </button>
                     </div>
+
                 </form>
             </div>
         </div>
     </div>
 
-    {{-- 簡単な「全選択・解除」スクリプト --}}
+    {{-- 全選択/解除スクリプト --}}
     <script>
         function toggleAllUsers(checked) {
             document.querySelectorAll('.user-checkbox').forEach(cb => {

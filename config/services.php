@@ -35,6 +35,7 @@ return [
     'client_secret' => env('X_CLIENT_SECRET'),
     'redirect'      => env('X_REDIRECT_URI'),
     'bearer_token' => env('X_BEARER_TOKEN'),
+    'base_uri'     => env('X_API_BASE', 'https://api.x.com/2'),
 ],
 
 
