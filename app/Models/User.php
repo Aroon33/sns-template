@@ -51,6 +51,29 @@ class User extends Authenticatable
 {
     return $this->hasOne(UserProfile::class);
 }
+public function clientProfile()
+{
+    return $this->hasOne(\App\Models\ClientProfile::class);
+}
+// app/Models/User.php
+public function metric()
+{
+    return $this->hasOne(UserMetric::class);
+}
+// app/Models/User.php
+public function apiPostTargets()
+{
+    return $this->hasMany(ApiPostTarget::class);
+}
+
+
+
+public function actions()
+{
+    return $this->hasMany(\App\Models\UserAction::class);
+}
+
+
 
 public function genres()
 {

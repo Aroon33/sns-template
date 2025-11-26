@@ -34,21 +34,94 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
 
-                        <!-- Authentication -->
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
+    {{-- ========================= --}}
+    {{-- ▼ クライアント（client） --}}
+    {{-- ========================= --}}
+    @if (Auth::user()->role === 'client')
+        <div class="block px-4 py-2 text-xs text-gray-400">
+            クライアントメニュー
+        </div>
 
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
+        <x-dropdown-link :href="route('client.dashboard')">
+            クライアントダッシュボード
+        </x-dropdown-link>
+
+        <x-dropdown-link :href="route('client.campaigns.create')">
+            新規キャンペーン作成
+        </x-dropdown-link>
+
+        <x-dropdown-link :href="route('client.profile.edit')">
+        クライアントプロフィール
+    </x-dropdown-link>
+    @endif
+
+
+    {{-- ========================= --}}
+    {{-- ▼ 管理者（admin） --}}
+    {{-- ========================= --}}
+    @if (Auth::user()->role === 'admin')
+        <div class="block px-4 py-2 text-xs text-gray-400">
+            管理者メニュー
+        </div>
+
+        <x-dropdown-link :href="route('admin.dashboard')">
+            管理者ダッシュボード
+        </x-dropdown-link>
+
+        <x-dropdown-link :href="route('admin.api_posts.create')">
+    API投稿作成
+</x-dropdown-link>
+
+
+        <x-dropdown-link :href="route('admin.users.index')">
+            ユーザー一覧
+        </x-dropdown-link>
+
+        <x-dropdown-link :href="route('admin.campaigns.index')">
+            キャンペーン一覧
+        </x-dropdown-link>
+    @endif
+
+
+    {{-- ========================= --}}
+    {{-- ▼ 一般ユーザー（general） --}}
+    {{-- ========================= --}}
+    @if (Auth::user()->role === 'general')
+        <div class="block px-4 py-2 text-xs text-gray-400">
+            ユーザーメニュー
+        </div>
+
+        <x-dropdown-link :href="route('user.dashboard')">
+            ユーザーダッシュボード
+        </x-dropdown-link>
+
+        <x-dropdown-link :href="route('user.mypage')">
+            マイページ
+        </x-dropdown-link>
+    @endif
+
+
+    {{-- ========================= --}}
+    {{-- ▼ 共通メニュー --}}
+    {{-- ========================= --}}
+    <div class="border-t border-gray-200 my-2"></div>
+
+    <x-dropdown-link :href="route('profile.edit')">
+        プロフィール設定
+    </x-dropdown-link>
+
+    <form method="POST" action="{{ route('logout') }}">
+        @csrf
+        <x-dropdown-link :href="route('logout')"
+                         onclick="event.preventDefault();
+                                  this.closest('form').submit();">
+            ログアウト
+        </x-dropdown-link>
+    </form>
+
+</x-slot>
+
                 </x-dropdown>
             </div>
 

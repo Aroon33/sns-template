@@ -8,10 +8,14 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CampaignController;
 use App\Http\Controllers\Admin\CampaignTargetController;
+use App\Http\Controllers\Admin\ApiPostController;
 use App\Http\Controllers\XAuthController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\ClientCampaignController;
 use App\Http\Controllers\ClientDashboardController;
+use App\Http\Controllers\UserMyPageController;
+use App\Http\Controllers\ClientRegisterController;
+use App\Http\Controllers\ClientProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,19 +33,17 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 Route::get('/dashboard', function () {
-
     $user = Auth::user();
 
     if (! $user) {
         return redirect()->route('login');
     }
 
-    return match($user->role) {
+    return match ($user->role) {
         'admin'  => redirect()->route('admin.dashboard'),
         'client' => redirect()->route('client.dashboard'),
         default  => redirect()->route('user.dashboard'),
     };
-
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 
@@ -60,7 +62,7 @@ Route::get('/auth/x/callback', [XAuthController::class, 'callback'])
 
 /*
 |--------------------------------------------------------------------------
-| Profile Routes
+| Profile Routes（共通）
 |--------------------------------------------------------------------------
 */
 
@@ -70,7 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 
 /*
@@ -88,10 +90,43 @@ Route::middleware(['auth', 'admin'])
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])
             ->name('dashboard');
 
-        // ユーザー管理
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        /*
+        |------------------------------
+        | ユーザー管理
+        |------------------------------
+        */
 
-        // 案件管理
+        Route::get('/users', [UserController::class, 'index'])
+            ->name('users.index');
+
+        // ユーザー詳細（管理者用マイページ）
+        Route::get('/users/{user}', [UserController::class, 'show'])
+            ->name('users.show');
+
+        // 管理者 → ユーザーへのアクション登録
+        Route::post('/users/{user}/actions', [UserController::class, 'storeAction'])
+            ->name('users.actions.store');
+
+        /*
+        |------------------------------
+        | API投稿（X API 連携用の土台）
+        |------------------------------
+        */
+
+        // API投稿作成ページ
+        Route::get('/api-posts/create', [ApiPostController::class, 'create'])
+            ->name('api_posts.create');
+
+        // API投稿登録（将来ここでX APIキュー投入）
+        Route::post('/api-posts', [ApiPostController::class, 'store'])
+            ->name('api_posts.store');
+
+        /*
+        |------------------------------
+        | 案件管理（キャンペーン）
+        |------------------------------
+        */
+
         Route::get('/campaigns', [CampaignController::class, 'index'])->name('campaigns.index');
         Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
         Route::post('/campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
@@ -111,7 +146,7 @@ Route::middleware(['auth', 'admin'])
         Route::post('/campaigns/{campaign}/targets/bulk-add', [CampaignController::class, 'bulkAdd'])
             ->name('campaigns.targets.bulk_add');
 
-        // 確定ターゲット一覧
+        // 確定ターゲット一覧（特定キャンペーン）
         Route::get('/campaigns/{campaign}/selected-targets', [CampaignTargetController::class, 'index'])
             ->name('campaigns.selected_targets');
 
@@ -123,15 +158,15 @@ Route::middleware(['auth', 'admin'])
         Route::delete('/campaigns/{campaign}/targets/{target}', [CampaignTargetController::class, 'destroy'])
             ->name('campaigns.targets.destroy');
 
-        // ★ 全ターゲット一覧（Admin Dashboard 用）
-        Route::get('/targets', [CampaignTargetController::class, 'index'])
+        // 全ターゲット一覧（キャンペーン横断）
+        Route::get('/targets', [CampaignTargetController::class, 'all'])
             ->name('targets.index');
     });
 
 
 /*
 |--------------------------------------------------------------------------
-| User Dashboard
+| User Dashboard Routes
 |--------------------------------------------------------------------------
 */
 
@@ -141,12 +176,20 @@ Route::middleware(['auth'])
     ->group(function () {
         Route::get('/dashboard', [UserDashboardController::class, 'index'])
             ->name('dashboard');
+
+        // マイページ
+        Route::get('/mypage', [UserMyPageController::class, 'show'])
+            ->name('mypage');
+
+        // 銀行情報更新
+        Route::post('/mypage/bank', [UserMyPageController::class, 'updateBankInfo'])
+            ->name('mypage.bank.update');
     });
 
 
 /*
 |--------------------------------------------------------------------------
-| Client Dashboard
+| Client Dashboard Routes
 |--------------------------------------------------------------------------
 */
 
@@ -156,21 +199,32 @@ Route::middleware(['auth'])
     ->group(function () {
         Route::get('/dashboard', [ClientDashboardController::class, 'index'])
             ->name('dashboard');
- // 案件作成ページ
+
         Route::get('/campaigns/create', [ClientCampaignController::class, 'create'])
             ->name('campaigns.create');
-
-        // 案件保存
         Route::post('/campaigns', [ClientCampaignController::class, 'store'])
             ->name('campaigns.store');
-
-        // 案件詳細（数字確認ページ）
         Route::get('/campaigns/{campaign}', [ClientCampaignController::class, 'show'])
             ->name('campaigns.show');
+
+        // クライアントプロフィール
+        Route::get('/profile', [ClientProfileController::class, 'edit'])
+            ->name('profile.edit');
+        Route::patch('/profile', [ClientProfileController::class, 'update'])
+            ->name('profile.update');
     });
 
 
+/*
+|--------------------------------------------------------------------------
+| Client Register Routes
+|--------------------------------------------------------------------------
+*/
 
+Route::middleware('guest')->group(function () {
+    Route::get('/client/register', [ClientRegisterController::class, 'create'])
+        ->name('client.register');
 
-
-
+    Route::post('/client/register', [ClientRegisterController::class, 'store'])
+        ->name('client.register.store');
+});

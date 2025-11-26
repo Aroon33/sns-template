@@ -39,6 +39,18 @@ class CampaignTargetController extends Controller
 
         return back()->with('status', 'target-updated');
     }
+    /**
+     * ★ 全ターゲット一覧（キャンペーン指名なし）
+     */
+    public function all()
+    {
+        $targets = CampaignTarget::with(['campaign', 'user.profile', 'user.genres'])
+            ->orderBy('id')
+            ->get();
+
+        // campaign は特定しないので targets だけ渡す
+        return view('admin.campaign_targets.all', compact('targets'));
+    }
 
     /**
      * ★ ターゲットから外す（削除）
