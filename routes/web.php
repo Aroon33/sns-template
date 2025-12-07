@@ -225,3 +225,15 @@ Route::middleware('guest')->group(function () {
     Route::post('/client/register', [ClientRegisterController::class, 'store'])
         ->name('client.register.store');
 });
+/*
+|--------------------------------------------------------------------------
+| X OAuth2 (PKCE User Context 用)
+|--------------------------------------------------------------------------
+*/
+
+use App\Http\Controllers\XOAuthController;
+
+Route::prefix('x')->name('x.')->group(function () {
+    Route::get('/oauth/redirect', [XOAuthController::class, 'redirect'])->name('oauth.redirect');
+    Route::get('/oauth/callback', [XOAuthController::class, 'callback'])->name('oauth.callback');
+});

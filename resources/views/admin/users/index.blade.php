@@ -1,101 +1,143 @@
 {{-- resources/views/admin/users/index.blade.php --}}
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                ユーザー一覧（管理者）
+                登録ユーザー一覧（管理者）
             </h2>
-
-            <nav class="flex items-center gap-4 text-sm text-gray-600">
-                <a href="{{ route('admin.dashboard') }}" class="hover:underline">管理TOP</a>
-                <a href="{{ route('admin.users.index') }}" class="font-semibold text-blue-600">ユーザー一覧</a>
-                <a href="{{ route('admin.campaigns.index') }}" class="hover:underline">案件一覧</a>
-            </nav>
         </div>
     </x-slot>
 
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <div class="py-10">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
 
-            {{-- サマリー --}}
-            <div class="bg-white shadow-sm sm:rounded-lg p-6 flex justify-between items-center">
-                <div>
-                    <p class="text-sm text-gray-500">登録ユーザー数</p>
-                    <p class="text-3xl font-bold text-gray-800">
-                        {{ method_exists($users, 'total') ? $users->total() : $users->count() }} 件
+            {{-- サマリーカード --}}
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+
+                <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                    <p class="text-xs text-gray-500 mb-1">登録ユーザー数</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ number_format($totalUsers) }}</p>
+                </div>
+
+                <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                    <p class="text-xs text-gray-500 mb-1">総フォロワー数</p>
+                    <p class="text-2xl font-bold text-indigo-600">
+                        {{ number_format($metricsSummary->followers_sum ?? 0) }}
                     </p>
                 </div>
+
+                <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                    <p class="text-xs text-gray-500 mb-1">総投稿数</p>
+                    <p class="text-2xl font-bold text-indigo-600">
+                        {{ number_format($metricsSummary->posts_sum ?? 0) }}
+                    </p>
+                </div>
+
+                <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                    <p class="text-xs text-gray-500 mb-1">総いいね数</p>
+                    <p class="text-2xl font-bold text-rose-600">
+                        {{ number_format($metricsSummary->likes_sum ?? 0) }}
+                    </p>
+                </div>
+
+                <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                    <p class="text-xs text-gray-500 mb-1">総インプレッション</p>
+                    <p class="text-2xl font-bold text-emerald-600">
+                        {{ number_format($metricsSummary->impressions_sum ?? 0) }}
+                    </p>
+                </div>
+
             </div>
 
-            {{-- ユーザー一覧テーブル --}}
-            <div class="bg-white shadow-sm sm:rounded-lg p-0 overflow-hidden">
+            {{-- 登録ユーザー一覧テーブル --}}
+            <div class="bg-white shadow-sm sm:rounded-lg p-6">
+
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    ユーザー一覧
+                </h3>
+
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
-                        <thead class="bg-gray-50 border-b">
-                        <tr class="text-left text-gray-600 text-xs uppercase tracking-wider">
-                            <th class="px-4 py-3">ID</th>
-                            <th class="px-4 py-3">名前</th>
-                            <th class="px-4 py-3">メール</th>
-                            <th class="px-4 py-3">ロール</th>
-                            <th class="px-4 py-3">X ユーザー名</th>
-                            <th class="px-4 py-3">フォロワー</th>
-                            <th class="px-4 py-3">登録日</th>
+                        <thead>
+                        <tr class="border-b text-gray-500">
+                            <th class="px-3 py-2 text-left">ID</th>
+                            <th class="px-3 py-2 text-left">名前</th>
+                            <th class="px-3 py-2 text-left">メール</th>
+                            <th class="px-3 py-2 text-left">ロール</th>
+                            <th class="px-3 py-2 text-left">Xアカウント</th>
+                            <th class="px-3 py-2 text-right">フォロワー</th>
+                            <th class="px-3 py-2 text-right">投稿数</th>
+                            <th class="px-3 py-2 text-right">いいね</th>
+                            <th class="px-3 py-2 text-right">RT</th>
+                            <th class="px-3 py-2 text-right">インプレッション</th>
+                            <th class="px-3 py-2 text-left">登録日</th>
+                            <th class="px-3 py-2 text-left">詳細</th>
                         </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100">
-                        @forelse ($users as $user)
-                            @php($p = $user->profile)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3">{{ $user->id }}</td>
-                                <td class="px-4 py-3 font-medium">{{ $user->name }}</td>
-                                <td class="px-4 py-3">{{ $user->email }}</td>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex px-2 py-0.5 text-xs rounded-full font-semibold
-                                        @if($user->role === 'admin')
-                                            bg-pink-100 text-pink-700
-                                        @elseif($user->role === 'client')
-                                            bg-blue-100 text-blue-700
-                                        @else
-                                            bg-green-100 text-green-700
-                                        @endif
-                                    ">
+
+                        <tbody>
+                        @foreach ($users as $user)
+                            @php
+                                $profile = $user->profile;
+                                $metric  = $user->metric;
+                            @endphp
+
+                            <tr class="border-b last:border-0">
+                                <td class="px-3 py-2">{{ $user->id }}</td>
+                                <td class="px-3 py-2">{{ $profile->display_name ?? $user->name }}</td>
+                                <td class="px-3 py-2">{{ $user->email }}</td>
+                                <td class="px-3 py-2">
+                                    <span class="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">
                                         {{ $user->role }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-3">
-                                    @if($p && $p->x_username)
-                                        @{{ $p->x_username }}
+                                <td class="px-3 py-2">
+                                    @if ($profile?->x_username)
+                                        @{{ $profile->x_username }}
                                     @else
                                         <span class="text-xs text-gray-400">未連携</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3">
-                                    {{ isset($p->followers_count) ? number_format($p->followers_count) : '—' }}
+
+                                <td class="px-3 py-2 text-right">
+                                    {{ number_format($metric->followers_count ?? 0) }}
                                 </td>
-                                <td class="px-4 py-3 text-gray-500">
-                                    {{ optional($user->created_at)->format('Y-m-d') }}
+                                <td class="px-3 py-2 text-right">
+                                    {{ number_format($metric->posts_count ?? 0) }}
+                                </td>
+                                <td class="px-3 py-2 text-right text-rose-600">
+                                    {{ number_format($metric->likes_count ?? 0) }}
+                                </td>
+                                <td class="px-3 py-2 text-right text-sky-600">
+                                    {{ number_format($metric->retweets_count ?? 0) }}
+                                </td>
+                                <td class="px-3 py-2 text-right text-indigo-600">
+                                    {{ number_format($metric->impressions_count ?? 0) }}
+                                </td>
+
+                                <td class="px-3 py-2">
+                                    {{ $user->created_at?->format('Y-m-d') }}
+                                </td>
+                                <td class="px-3 py-2">
+                                    <a href="{{ route('admin.users.show', $user) }}"
+                                       class="text-indigo-600 hover:underline">
+                                        詳細
+                                    </a>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="px-4 py-6 text-center text-gray-500">
-                                    まだユーザーがいません。
-                                </td>
-                            </tr>
-                        @endforelse
+
+                        @endforeach
                         </tbody>
                     </table>
                 </div>
 
-                {{-- ページネーション --}}
-                @if(method_exists($users, 'links'))
-                    <div class="px-4 py-3 bg-gray-50 border-t">
-                        {{ $users->links() }}
-                    </div>
-                @endif
+                <div class="mt-4">
+                    {{ $users->links() }}
+                </div>
 
             </div>
+
         </div>
     </div>
 </x-app-layout>
-

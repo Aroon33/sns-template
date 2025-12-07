@@ -30,13 +30,17 @@ return [
 
 
 
-'twitter-oauth-2' => [
+ 'twitter-oauth-2' => [
     'client_id'     => env('X_CLIENT_ID'),
     'client_secret' => env('X_CLIENT_SECRET'),
     'redirect'      => env('X_REDIRECT_URI'),
+  ]
+
+ ,
+   'x' => [
     'bearer_token' => env('X_BEARER_TOKEN'),
     'base_uri'     => env('X_API_BASE', 'https://api.x.com/2'),
-],
+  ],
 
 
 

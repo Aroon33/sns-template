@@ -10,13 +10,33 @@ use App\Models\UserAction;
 class UserController extends Controller
 {
     public function index()
-    {
-        $users = User::with('profile')
-            ->orderByDesc('id')
-            ->paginate(20);
+{
+    // ユーザー一覧（profile + metric をロード）
+    $users = User::with(['profile', 'metric'])
+        ->orderByDesc('id')
+        ->paginate(20);
 
-        return view('admin.users.index', compact('users'));
-    }
+    // 全ユーザー数
+    $totalUsers = User::count();
+
+    // 全体のメトリクス合計
+    $metricsSummary = UserMetric::selectRaw('
+            COALESCE(SUM(followers_count), 0)       AS followers_sum,
+            COALESCE(SUM(posts_count), 0)           AS posts_sum,
+            COALESCE(SUM(likes_count), 0)           AS likes_sum,
+            COALESCE(SUM(retweets_count), 0)        AS rts_sum,
+            COALESCE(SUM(impressions_count), 0)     AS impressions_sum
+        ')
+        ->first();
+
+    return view('admin.users.index', [
+        'users'          => $users,
+        'totalUsers'     => $totalUsers,
+        'metricsSummary' => $metricsSummary,
+    ]);
+}
+
+
 
     public function show(User $user)
     {
